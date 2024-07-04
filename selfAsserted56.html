@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>Sign up</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      href="https://ajax.aspnetcdn.com/ajax/bootstrap/3.3.5/css/bootstrap.min.css"
+      rel="stylesheet"
+      type="text/css"
+    />
+    <!-- <link
+      href="https://deveusppstorblob.blob.core.windows.net/signupsignin/assets.css"
+      rel="stylesheet"
+      type="text/css"
+    />
+    <link
+      href="https://deveusppstorblob.blob.core.windows.net/signupsignin/common2.css"
+      rel="stylesheet"
+      type="text/css"
+    />
+    <link
+      href="https://deveusppstorblob.blob.core.windows.net/signupsignin/selfasserted.css"
+      rel="stylesheet"
+      type="text/css"
+    /> -->
+    <style>
+      .TextBox.extension_DateOfBirth_li {
+        display: none !important;
+      }
+      #extension_DateOfBirth_label {
+        display: none !important;
+      }
+      .required-asterisk {
+        color: red;
+        position: absolute;
+        right: 6%;
+        font-size: 1.4em;
+        margin-top: 0.5em;
+      }
+      .error {
+        color: red;
+        font-size: 12px;
+        margin-top: 5px;
+      }
+      .textInput {
+        margin-bottom: 20px;
+      }
+      input[type="date"] {
+        padding: 6px 12px;
+        font-size: 14px;
+        line-height: 1.42857143;
+        color: #555;
+        background-color: #fff;
+        background-image: none;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+        box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+        -webkit-transition: border-color ease-in-out 0.15s,
+          box-shadow ease-in-out 0.15s;
+        -o-transition: border-color ease-in-out 0.15s,
+          box-shadow ease-in-out 0.15s;
+        transition: border-color ease-in-out 0.15s, box-shadow ease-in-out 0.15s;
+      }
+      .container.self_asserted_container {
+        background: url("https://ppdevusadb2ctnt.b2clogin.com/static/tenant/templates/backgrounds/1-1.png")
+          no-repeat center center;
+        background-size: cover;
+        padding: 20px;
+        border-radius: 10px;
+      }
+      .textInput {
+        margin-bottom: 0px;
+      }
+      #attributeList ul li input {
+        height: 50px;
+        width: 70%;
+        border-radius: 0.5rem;
+        text-indent: 20px;
+        background-color: #fff !important;
+        background-image: none !important;
+        color: #555;
+      }
+      input,
+      select {
+        border: 1px solid #605e5c;
+      }
+      #attributeVerification #attributeList ul li input {
+        width: 100%;
+      }
+      .show-hide-button {
+        margin-left: 10px;
+        background-color: #0078d4;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        cursor: pointer;
+        border-radius: 4px;
+      }
+
+      .show-hide-button:hover {
+        background-color: #005a9e;
+      }
+    </style>
+    <script>
+      console.log("Hello World 52............");
+
+      function init() {
+        console.log("Init started");
+
+        var dobLabel = document.getElementById("extension_DateOfBirth_label");
+        var dobField = document.getElementById("extension_DateOfBirth");
+        var input = document.getElementById("extension_DOB");
+
+        if (dobLabel && dobField && input) {
+          dobLabel.style.display = "none";
+          dobField.style.display = "none"; // Hide the Date of Birth field
+          input.setAttribute("type", "date");
+          input.setAttribute("aria-required", "true"); // Mark date input as required
+          input.addEventListener("input", function () {
+            // Copy the value from the source text box to the destination text box
+            document.getElementById("extension_DateOfBirth").value = this.value;
+          });
+
+          clearInterval(pollingInterval); // Stop the polling once the elements are found and updated
+          console.log("Elements found and updated");
+          fetchDropdownData();
+          addAsterisksToRequiredFields(); // Add this line to call the function after elements are updated
+          reorderFields(); // Call to reorder fields
+          addValidationListeners(); // Call to add validation listeners
+          addShowHidePasswordButtons(); // Call to add show/hide buttons
+        }
+        console.log("Polling...");
+      }
+
+      function addShowHidePasswordButtons() {
+        var newPasswordField = document.getElementById("newPassword");
+        var confirmPasswordField = document.getElementById("reenterPassword");
+
+        if (newPasswordField && confirmPasswordField) {
+          addShowHideButton(newPasswordField);
+          addShowHideButton(confirmPasswordField);
+        }
+      }
+
+      function addShowHideButton(passwordField) {
+        var showButton = document.createElement("button");
+        showButton.type = "button";
+        showButton.textContent = "Show";
+        showButton.classList.add("show-hide-button");
+        showButton.onclick = function () {
+          togglePasswordVisibility(passwordField, showButton);
+        };
+
+        passwordField.parentNode.appendChild(showButton);
+      }
+
+      function togglePasswordVisibility(passwordField, showButton) {
+        if (passwordField.type === "password") {
+          passwordField.type = "text";
+          showButton.textContent = "Hide";
+        } else {
+          passwordField.type = "password";
+          showButton.textContent = "Show";
+        }
+      }
+
+      function fetchDropdownData() {
+        var apiUrl =
+          "https://dev-eus-apim-pp.azure-api.net/dev-eus-fa-pp-userregistration/GetPrereqData";
+
+        console.log("Fetching dropdown data from API: " + apiUrl);
+
+        fetch(apiUrl)
+          .then((response) => {
+            console.log("API response received", response);
+            return response.json();
+          })
+          .then((data) => {
+            console.log("Data received from API", data);
+            populateDropdown(
+              "extension_genderPronouns",
+              data.GenderPronouns,
+              "Gender Pronouns"
+            );
+            populateDropdown("extension_GenderId", data.Genders, "Gender");
+            populateDropdown(
+              "extension_GenderIdentityId",
+              data.GenderIdentity,
+              "Gender Identity"
+            );
+            populateDropdown(
+              "extension_preferredLanguage",
+              data.Languages,
+              "Preferred Language"
+            );
+            addAsterisksToRequiredFields(); // Call here as well to ensure dropdowns are loaded
+          })
+          .catch((error) =>
+            console.error("Error fetching dropdown data:", error)
+          );
+      }
+
+      function populateDropdown(dropdownId, items, placeholder) {
+        var dropdown = document.getElementById(dropdownId);
+        if (dropdown) {
+          dropdown.innerHTML = ""; // Clear existing options
+
+          // Add a placeholder option
+          var placeholderOption = document.createElement("option");
+          placeholderOption.value = "";
+          placeholderOption.textContent = `Select ${placeholder}`;
+          placeholderOption.disabled = true;
+          placeholderOption.selected = true;
+          dropdown.appendChild(placeholderOption);
+
+          console.log(`Populating dropdown: ${dropdownId} with items:`, items);
+          items.forEach((item) => {
+            var option = document.createElement("option");
+            option.value = item.Id;
+            option.textContent = item.Code;
+            dropdown.appendChild(option);
+          });
+        } else {
+          console.error(`Dropdown with ID ${dropdownId} not found`);
+        }
+      }
+
+      function addAsterisksToRequiredFields() {
+        const requiredFields = document.querySelectorAll(
+          '[aria-required="true"]:not([style*="display: none"])'
+        );
+        requiredFields.forEach((field) => {
+          // Add asterisk directly after the input
+          if (
+            !field.nextElementSibling ||
+            !field.nextElementSibling.classList.contains("required-asterisk")
+          ) {
+            const asterisk = document.createElement("span");
+            asterisk.textContent = " *";
+            asterisk.classList.add("required-asterisk");
+            field.parentNode.insertBefore(asterisk, field.nextSibling);
+          }
+        });
+
+        const requiredDropdowns = document.querySelectorAll(
+          'select[aria-required="true"]'
+        );
+        requiredDropdowns.forEach((dropdown) => {
+          if (
+            !dropdown.nextElementSibling ||
+            !dropdown.nextElementSibling.classList.contains("required-asterisk")
+          ) {
+            const asterisk = document.createElement("span");
+            asterisk.textContent = " *";
+            asterisk.classList.add("required-asterisk");
+            dropdown.parentNode.insertBefore(asterisk, dropdown.nextSibling);
+          }
+        });
+      }
+
+      function reorderFields() {
+        const form = document.querySelector("ul");
+        if (!form) return;
+
+        const firstNameField = document.querySelector(
+          ".extension_FirstName_li"
+        );
+        const lastNameField = document.querySelector(".extension_LastName_li");
+        const emailField = document.querySelector(".email_li");
+        const passwordField = document.querySelector(".newPassword_li");
+        const confirmPasswordField = document.querySelector(
+          ".reenterPassword_li"
+        );
+
+        if (
+          firstNameField &&
+          lastNameField &&
+          emailField &&
+          passwordField &&
+          confirmPasswordField
+        ) {
+          form.insertBefore(firstNameField, emailField);
+          form.insertBefore(lastNameField, emailField);
+          form.insertBefore(passwordField, confirmPasswordField);
+        }
+      }
+
+      function addValidationListeners() {
+        const form = document.getElementById("attributeVerification");
+        const requiredFields = form.querySelectorAll('[aria-required="true"]');
+
+        requiredFields.forEach((field) => {
+          field.addEventListener("blur", function () {
+            validateField(field);
+          });
+        });
+      }
+
+      function validateField(field) {
+        const errorContainer = field.parentNode.querySelector(".itemLevel");
+        if (field.value.trim() === "") {
+          if (!errorContainer.querySelector(".error")) {
+            const errorMsg = document.createElement("div");
+            errorMsg.classList.add("error", "show");
+            errorMsg.setAttribute("aria-hidden", "false");
+            errorMsg.textContent = `${field.placeholder.replace(
+              " *",
+              ""
+            )} is required.`;
+            errorContainer.appendChild(errorMsg);
+          }
+        } else {
+          const errorMsg = errorContainer.querySelector(".error");
+          if (errorMsg) {
+            errorMsg.remove();
+          }
+        }
+      }
+
+      var pollingInterval = setInterval(init, 100);
+    </script>
+  </head>
+
+  <body>
+    <div class="container self_asserted_container">
+      <div class="row">
+        <div class="col-lg-6">
+          <div class="panel panel-default">
+            <div class="panel-body">
+              <img
+                alt="Company Logo"
+                class="companyLogo"
+                src="https://deveusppstorblob.blob.core.windows.net/signupsignin/logo.svg"
+              />
+              <div id="api"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
